@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix
 from os.path import join
 
 def valid_areas():
-    return ['tw_oc','tw_ny','go_sf','go_sc','go_ny','bk_sf','bk_sc','bk_ny','last_mf']
+    return ['tw_oc','tw_ny','go_sf','go_sc','go_ny','bk_sf','bk_sc','bk_ny','lastmf']
 
 def load_data(area):
     """
