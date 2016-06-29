@@ -139,13 +139,23 @@ class _Memory(_MFS):
         #temp = temp * (1-alpha) + np.mean(temp,axis = 0)*alpha       
         return temp
 
+class _S_Memory(_MFS):
+    """
+    No latent space, this is memory bases. Smoothed by column.
+    """
+    def get_factorized_mat(self, data, dim, area):
+        temp = np.array(data.toarray())
+        alpha = 0.01 # alpha is smoothing parameter
+        temp = temp * (1-alpha) + np.mean(temp,axis = 0)*alpha       
+        return temp
+
 
 """
 *******************************************************************************************
                                     FACTORY METHODS
 *******************************************************************************************
 """
-_mfs_factory = {'hbnmf': _HBNMF, 'svd': _SVD, 'nmf': _NMF, 'memory': _Memory}
+_mfs_factory = {'hbnmf': _HBNMF, 'svd': _SVD, 'nmf': _NMF, 'memory': _Memory, 's_memory': _S_Memory}
 
 
 def print_methods():

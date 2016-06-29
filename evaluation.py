@@ -127,7 +127,7 @@ class _EvaluateSingle(_Evaluation):
         # Therefore the val can be added to train.
         eval_train = train + val
 
-        svd_scores, nmf_scores, hb_nmf_scores, mem_scores = self._train_mfs(['svd', 'nmf', 'hbnmf', 'memory'],
+        svd_scores, nmf_scores, hb_nmf_scores, mem_scores, s_mem_scores= self._train_mfs(['svd', 'nmf', 'hbnmf', 'memory','s_memory'],
                                                                             eval_train, dim, area)
         gt_scores = self._train_mfs(['memory'],test, dim, area)
 
@@ -146,7 +146,10 @@ class _EvaluateSingle(_Evaluation):
         log.info('Evaluating ground truth')
         gt_erank = self._compute_erank(test, gt_scores)
 
-        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HBPF': hb_nmf_erank, 'GROUNDTRUTH': gt_erank}
+        log.info('Evaluating smoothed memory')
+        s_mem_erank = self._compute_erank(test, s_mem_scores)
+
+        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HBPF': hb_nmf_erank, 'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank}
         self.pretty_print(results)
 
         return results
