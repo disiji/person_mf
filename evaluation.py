@@ -127,9 +127,9 @@ class _EvaluateSingle(_Evaluation):
         # Therefore the val can be added to train.
         eval_train = train + val
 
-        gt_scores = self._train_mfs(['memory'],test, dim, area)
-        s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)
-        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)
+        gt_scores = self._train_mfs(['memory'],test, dim, area)[0]
+        s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)[0]
+        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)[0]
 
         log.info('Evaluating memory')
         mem_erank = self._compute_erank(test, mem_scores)
