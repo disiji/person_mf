@@ -29,7 +29,7 @@ def load_data(area):
     -------
         1.  IOError:              Area or one of the files does not exist.
     """
-    root_folder = '/extra/disij0/data/personal_mf'
+    root_folder = '/extra/disij0/data/person_mf'
 
     log.info('Loading all data for area %s' % area)
     train_file = join(root_folder, area, 'train.csv')

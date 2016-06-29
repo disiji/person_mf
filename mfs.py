@@ -64,7 +64,7 @@ class _HBNMF(_MFS):
 
         assert area is not None
 
-        root_dir = '/home/disij/projects/hbpf/data/%s/hier_nmf' % area
+        root_dir = '/extra/disij0/data/person_mf/%s/hier_nmf' % area
 
         htheta = fu.load_np_txt(join(root_dir, 'htheta.tsv'), delimiter='\t')
         htheta = self._fix_projection(htheta, I, dim)
