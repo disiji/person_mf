@@ -136,7 +136,7 @@ class _Memory(_MFS):
     def get_factorized_mat(self, data, dim, area):
         temp = np.array(data.toarray())
         alpha = 0.01 # alpha is smoothing parameter
-        temp = temp * (1-alpha) + np.mean(temp,axis = 0)*alpha       
+        #temp = temp * (1-alpha) + np.mean(temp,axis = 0)*alpha       
         return temp
 
 
