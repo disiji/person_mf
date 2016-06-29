@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix
 from os.path import join
 
 def valid_areas():
-    return ['tw_oc','tw_ny','go_sf','go_sc','go_ny','bk_sf','bk_sc','bk_ny']
+    return ['tw_oc','tw_ny','go_sf','go_sc','go_ny','bk_sf','bk_sc','bk_ny','last_mf']
 
 def load_data(area):
     """
@@ -29,7 +29,7 @@ def load_data(area):
     -------
         1.  IOError:              Area or one of the files does not exist.
     """
-    root_folder = '/home/disij/projects/hbpf/data'
+    root_folder = '/extra/disij0/data/personal_mf'
 
     log.info('Loading all data for area %s' % area)
     train_file = join(root_folder, area, 'train.csv')
