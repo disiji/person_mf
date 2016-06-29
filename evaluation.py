@@ -128,9 +128,8 @@ class _EvaluateSingle(_Evaluation):
         eval_train = train + val
 
         gt_scores = self._train_mfs(['memory'],test, dim, area)
-        self.pretty_print({'GROUNDTRUTH': gt_erank})
-
         s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)
+        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)
 
         log.info('Evaluating ground truth')
         gt_erank = self._compute_erank(test, gt_scores)
@@ -138,8 +137,12 @@ class _EvaluateSingle(_Evaluation):
         log.info('Evaluating smoothed memory')
         s_mem_erank = self._compute_erank(test, s_mem_scores)
 
-        svd_scores, nmf_scores, hb_nmf_scores, mem_scores= self._train_mfs(['svd', 'nmf', 'hbnmf', 'memory','s_memory'],
-                                                                            eval_train, dim, area)
+        log.info('Evaluating memory')
+        mem_erank = self._compute_erank(test, mem_scores)
+
+        self.pretty_print({'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank, 'MEMORY': mem_erank})
+
+        svd_scores, nmf_scores, hb_nmf_scores= self._train_mfs(['svd', 'nmf', 'hbnmf'],eval_train, dim, area)
 
         log.info('Evaluating SVD')
         svd_erank = self._compute_erank(test, svd_scores)
@@ -149,9 +152,6 @@ class _EvaluateSingle(_Evaluation):
 
         log.info('Evaluating Hierarchical Bayes NMF')
         hb_nmf_erank = self._compute_erank(test, hb_nmf_scores)
-
-        log.info('Evaluating memory')
-        mem_erank = self._compute_erank(test, mem_scores)
 
 
 
