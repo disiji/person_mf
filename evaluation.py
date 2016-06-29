@@ -129,6 +129,7 @@ class _EvaluateSingle(_Evaluation):
 
         svd_scores, nmf_scores, hb_nmf_scores, mem_scores = self._train_mfs(['svd', 'nmf', 'hbnmf', 'memory'],
                                                                             eval_train, dim, area)
+        gt_scores = self._train_mfs(['memory'],test, dim, area)
 
         log.info('Evaluating SVD')
         svd_erank = self._compute_erank(test, svd_scores)
@@ -142,7 +143,10 @@ class _EvaluateSingle(_Evaluation):
         log.info('Evaluating memory')
         mem_erank = self._compute_erank(test, mem_scores)
 
-        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HB_NMF': hb_nmf_erank}
+        log.info('Evaluating ground truth')
+        gt_erank = self._compute_erank(test, gt_scores)
+
+        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HBPF': hb_nmf_erank, 'GROUNDTRUTH': gt_erank}
         self.pretty_print(results)
 
         return results
