@@ -131,14 +131,14 @@ class _EvaluateSingle(_Evaluation):
         s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)
         mem_scores = self._train_mfs(['memory'],eval_train, dim, area)
 
-        log.info('Evaluating ground truth')
-        gt_erank = self._compute_erank(test, gt_scores)
+        log.info('Evaluating memory')
+        mem_erank = self._compute_erank(test, mem_scores)
 
         log.info('Evaluating smoothed memory')
         s_mem_erank = self._compute_erank(test, s_mem_scores)
 
-        log.info('Evaluating memory')
-        mem_erank = self._compute_erank(test, mem_scores)
+        log.info('Evaluating ground truth')
+        gt_erank = self._compute_erank(test, gt_scores)
 
         self.pretty_print({'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank, 'MEMORY': mem_erank})
 
