@@ -12,7 +12,7 @@ from scipy.sparse import coo_matrix
 from os.path import join
 
 def valid_areas():
-    return ['tw_oc','tw_ny','go_sf','go_sc','go_ny','bk_sf','bk_sc','bk_ny','lastfm']
+    return ['tw_oc']
 
 def load_data(area):
     """
@@ -29,16 +29,16 @@ def load_data(area):
     -------
         1.  IOError:              Area or one of the files does not exist.
     """
-    root_folder = '/extra/disij0/data/person_mf'
+    root_folder = ''
 
     log.info('Loading all data for area %s' % area)
     train_file = join(root_folder, area, 'train.csv')
     val_file = join(root_folder, area, 'val.csv')
     test_file = join(root_folder, area, 'test.csv')
 
-    train_data = load_np_txt(train_file)
-    val_data = load_np_txt(val_file)
-    test_data = load_np_txt(test_file)
+    train_data = np.loadtxt(train_file,delimiter=',')
+    val_data = np.loadtxt(val_file,delimiter=',')
+    test_data = np.loadtxt(test_file,delimiter=',')
 
     # In order to create the coo_matrix we need to have the number of rows and columns in the matrix
     # All individuals will have data in train, val and test so it's enough to check how many uses are in train.
@@ -55,29 +55,3 @@ def load_data(area):
     test = coo_matrix((test_data[:, 2], (test_data[:, 0], test_data[:, 1])), shape=(I, L)).tocsr()
 
     return train, val, test
-
-
-def load_np_txt(file_path, delimiter=','):
-    """
-    Wrapper for np.loadtxt that also prints the time.
-
-     INPUT:
-    -------
-        1. file_path:   <string>    file path
-        2. delimiter:   <string>    delimiter in the file (default = ',' csv file)
-
-     OUTPUT:
-    --------
-        1. data:    <ndarray>   numpy array of the data
-
-     RAISE:
-    -------
-        1. IOError
-    """
-    log.info('Loading %s' % file_path)
-    start = time.time()
-    data = np.loadtxt(file_path, delimiter=delimiter)
-    log.info('Loading took %d seconds' % (time.time() - start))
-
-    return data
-

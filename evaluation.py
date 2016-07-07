@@ -89,7 +89,7 @@ class _Evaluation(object):
         """
         trained_mfs = []
         for mf in mf_types:
-            log.info('Training %s' % mf)
+            #log.info('Training %s' % mf)
             trained_mfs.append(mfs.factorize_matrix(mf, train, dim, area))
 
         return trained_mfs
@@ -140,8 +140,6 @@ class _EvaluateSingle(_Evaluation):
         log.info('Evaluating ground truth')
         gt_erank = self._compute_erank(test, gt_scores)
 
-        self.pretty_print({'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank, 'MEMORY': mem_erank})
-
         svd_scores, nmf_scores, hb_nmf_scores= self._train_mfs(['svd', 'nmf', 'hbnmf'],eval_train, dim, area)
 
         log.info('Evaluating SVD')
@@ -152,10 +150,10 @@ class _EvaluateSingle(_Evaluation):
 
         log.info('Evaluating Hierarchical Bayes NMF')
         hb_nmf_erank = self._compute_erank(test, hb_nmf_scores)
+        self.pretty_print({'SVD': svd_erank, 'NMF': nmf_erank})
 
 
-
-        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HBPF': hb_nmf_erank, 'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank}
+        results = {'MEMORY': mem_erank, 'SVD': svd_erank, 'NMF': nmf_erank, 'HBPF': hb_nmf_erank, 'GROUNDTRUTH': gt_erank, 'S_MEMORY': s_mem_erank, 'MEMORY': mem_erank}
         self.pretty_print(results)
 
         return results
