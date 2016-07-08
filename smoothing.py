@@ -108,6 +108,16 @@ class _Evaluation(object):
         x = []
         col_names = ['avg. indiv', 'avg. points']
         row_names = []
+        for name, scores in results.items():
+            row_names.append(name)
+            x.append(scores)
+
+        x = np.array(x)
+        print(DataFrame(x, columns=col_names, index=row_names))
+
+        x = []
+        col_names = ['avg. indiv', 'avg. points']
+        row_names = []
         for name, scores in sorted(results.items()):
             row_names.append(name)
             x.append(scores)
