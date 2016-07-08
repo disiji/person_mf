@@ -149,7 +149,7 @@ class _GridSearch(_Evaluation):
 
     def evaluate(self, train, val, test, dim, area):
 
-        ALPHA = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,1]
+        ALPHA = [0,0.001,0.01,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,0.999,1]
         mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
         popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
 

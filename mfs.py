@@ -154,9 +154,12 @@ class _Popularity(_MFS):
     Return popularity of places
     """
     def get_factorized_mat(self, data, dim, area):
+        print data.shape
         temp = np.array(data.toarray())
-        temp = np.tile(np.mean(temp,axis = 0) ,(len(temp),1))  
-        return temp
+        P = np.zeros(data.shape)
+        P += np.mean(temp,axis = 0)
+        print np.sum(P, axis=1)
+        return P
 
 """
 *******************************************************************************************
