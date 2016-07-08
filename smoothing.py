@@ -11,6 +11,7 @@ import numpy as np
 import mfs
 import abc
 from mix_learning import learn_mix_mult_global, learn_mix_mult_on_individual
+import collections
 
 from utils import log_utils as log
 from utils.objecitves import obj_func
@@ -107,7 +108,7 @@ class _Evaluation(object):
         x = []
         col_names = ['avg. indiv', 'avg. points']
         row_names = []
-        for name, scores in results.items():
+        for name, scores in sorted(results.items()):
             row_names.append(name)
             x.append(scores)
 
@@ -148,7 +149,7 @@ class _GridSearch(_Evaluation):
 
     def evaluate(self, train, val, test, dim, area):
 
-        ALPHA = [0.01,0.1]
+        ALPHA = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,0.99,1]
         mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
         popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
 
@@ -159,12 +160,34 @@ class _GridSearch(_Evaluation):
         results_val = dict()
         results_test = dict()
         for alpha in ALPHA:
-            log.info('Ranking when alpha is %f' % alpha)
+            log.info('Ranking when alpha is %.2f' % alpha)
             scores = alpha * mem_mult + (1-alpha)*popularity_mult
             erank_val = self._compute_erank(val, scores)
             erank_test = self._compute_erank(test, scores)
-            results_val['%.3f' % alpha] = erank_val
-            results_test['%.3f' % alpha] = erank_test
+            results_val['%.2f' % alpha] = erank_val
+            results_test['%.2f' % alpha] = erank_test
+        log.info('Erank on validation data')
+        self.pretty_print(results_val)
+        log.info('Erank on test data')
+        self.pretty_print(results_test)
+
+        eval_train = train + val
+        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)[0]
+        popularity_scores = self._train_mfs(['popularity'],eval_train,dim,area)[0]
+
+        mem_mult = normalize_mat_row(mem_scores)
+        popularity_mult = normalize_mat_row(popularity_scores)
+
+        log.info('Mem and popularity learnt from training and val data; searching alpha')
+        results_val = dict()
+        results_test = dict()
+        for alpha in ALPHA:
+            log.info('Ranking when alpha is %.2f' % alpha)
+            scores = alpha * mem_mult + (1-alpha)*popularity_mult
+            erank_val = self._compute_erank(val, scores)
+            erank_test = self._compute_erank(test, scores)
+            results_val['%.2f' % alpha] = erank_val
+            results_test['%.2f' % alpha] = erank_test
         log.info('Erank on validation data')
         self.pretty_print(results_val)
         log.info('Erank on test data')
@@ -185,13 +208,15 @@ class _EmGlobal(_Evaluation):
         mem_mult = normalize_mat_row(mem_scores)
         popularity_mult = normalize_mat_row(popularity_scores)
 
-        pi_mem_nmf = learn_mix_mult_global(1.1, mem_mult, nmf_mult, val)
+        pi_mem_pop = learn_mix_mult_global(1.1, mem_mult, popularity_mult, val)
+        log.info('Global mixing weight is %f and %f' % (pi_mem_pop[0],pi_mem_pop[1]))
+        print sum((pi_mem_pop).astype(float))
 
         # The flat prior won't change the ranking so there's no need to add it here.
-        log.info('Evaluating memory with NMF')
-        mem_nmf_erank = self._compute_erank(test, mem_scores, nmf_scores, pi_mem_nmf)
+        log.info('Evaluating memory with popularity')
+        mem_pop_erank = self._compute_erank(test, mem_mult, popularity_mult, pi_mem_pop)
 
-        results = {'mem_nmf': mem_nmf_erank, 'mem_hb_nmf': mem_hb_nmf_erank}
+        results = {'MEMORY+POPULARITY': mem_pop_erank}
         self.pretty_print(results)
 
         return results
@@ -205,33 +230,23 @@ class _EmIndiv(_Evaluation):
         log.info('Evaluating ranking with individual learned mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
-        log.info('Learning Memory, NMF and hb NMF mfs on train only for mixing weights optimization')
-        nmf_scores, hb_nmf_scores, mem_scores = self._train_mfs(['nmf', 'hbnmf', 'memory'], train, dim, area)
+        mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
+        popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
 
-        log.info('Learning mix for MEM and NMF')
         mem_mult = normalize_mat_row(mem_scores)
-        nmf_mult = normalize_mat_row(nmf_scores + 0.001)   # Small flat prior to avoid 0.
-        pis_mem_nmf = learn_mix_mult_on_individual(1.1, mem_mult, nmf_mult, val)
+        popularity_mult = normalize_mat_row(popularity_scores)
 
-        log.info('Learning mix for MEM and hb NMF')
-        hb_nmf_mult = normalize_mat_row(hb_nmf_scores + 0.001)  # Small flat prior to avoid 0.
-        pis_mem_hb_nmf = learn_mix_mult_on_individual(1.1, mem_mult, hb_nmf_mult, val)
-
-        log.info('Learning Memory NMF and hier NMF mfs on train+val for evaluation')
-        eval_train = train + val
-        nmf_scores, hb_nmf_scores, mem_scores = self._train_mfs(['nmf', 'hbnmf', 'memory'], eval_train, dim, area)
+        pi_mem_pop = learn_mix_mult_on_individual(1.1, mem_mult, popularity_mult, val)
 
         # The flat prior won't change the ranking so there's no need to add it here.
-        log.info('Evaluating memory with NMF')
-        mem_nmf_erank = self._compute_erank(test, mem_scores, nmf_scores, pis_mem_nmf)
+        log.info('Evaluating memory with popularity')
+        mem_pop_erank = self._compute_erank(test, mem_mult, popularity_mult, pi_mem_pop)
 
-        log.info('Evaluating memory with hb_NMF')
-        mem_hb_nmf_erank = self._compute_erank(test, mem_scores, hb_nmf_scores, pis_mem_hb_nmf)
-
-        results = {'mem_nmf': mem_nmf_erank, 'mem_hb_nmf': mem_hb_nmf_erank}
+        results = {'MEMORY+POPULARITY': mem_pop_erank}
         self.pretty_print(results)
 
         return results
+
 
 """
 ******************************************************************************

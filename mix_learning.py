@@ -99,6 +99,7 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
         pi = np.sum(resp * col_vector(val_data[:, 2]), axis=0)
         pi += alpha - 1
         pi /= np.sum(pi)
+        print pi
 
     total_time = time.time() - start
     log.debug('Finished EM. Total time = %d secs -- %.3f per iteration' % (total_time, total_time / em_iter))
