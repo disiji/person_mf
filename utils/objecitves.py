@@ -9,6 +9,7 @@ import time
 import log_utils as log
 
 from scipy.sparse import find
+from scipy.sparse import coo_matrix
 
 def _obj_logp(mult, test):
     """
@@ -166,14 +167,16 @@ def _points_logp(score_mat, test_data):
     --------
         1. avg_erank:   <float>  avg. erank of all the test data.
     """
+    score_mat += 0.0001
     score_mat /= np.sum(score_mat)
     N = test_data.sum()
     sum_logp = 0
+    test_data = coo_matrix(test_data)
 
     for i,j,v in zip(test_data.row, test_data.col, test_data.data):
         sum_logp += v * np.log(score_mat[i,j])
 
-    return sum_lop / N
+    return sum_logp / N
 
 
 def _individuals_logp(score_mat, test_data):
@@ -190,19 +193,22 @@ def _individuals_logp(score_mat, test_data):
     --------
         1. avg_erank:   <float>  avg. erank of all the individual.
     """
+    score_mat += 0.0001
     row_sums = score_mat.sum(axis=1)
     score_mat = score_mat / row_sums[:, np.newaxis]
     I = score_mat.shape[0]
     sum_logp = 0
 
+    test_data = coo_matrix(test_data)
+
     for i,j,v in zip(test_data.row, test_data.col, test_data.data):
         sum_logp += v * np.log(score_mat[i,j])
 
-    return sum_lop / I
+    return sum_logp / I
 
 
 # factory
 obj_func = {'ind_erank': _individuals_erank,
             'p_erank': _points_erank,
             'ind_logp': _individuals_logp,
-            'p_logp':_points_erank}
+            'p_logp':_points_logp}

@@ -18,6 +18,7 @@ from utils.objecitves import obj_func
 from utils.helpers import normalize_mat_row, col_vector
 
 from pandas import DataFrame
+from scipy.sparse import coo_matrix
 
 
 class _Evaluation(object):
@@ -46,20 +47,29 @@ class _Evaluation(object):
 
 
     @staticmethod
-    def _compute_logp(multi,test):
+    def _compute_logp(test, comp_a, comp_b=None, pi=None):
         """
-        Returns the logP of the test data.
+        Computes the ranking for the test data. This could work with one component (single component evaluation) or
+        with two and mixing weights. The mixing weights can be global or for each individual.
 
          INPUT:
         -------
-            1. user_mult:   <(L, )> ndarray>    probabilities. Sums to 1.
-            2. test:        <(N_te, ) ndarray>  test points.
+            1. test:          <(I, L) csr_mat>    sparse counts matrix. Rows are individuals, columns are locations.
+            2. comp_a:        <(I, L) ndarray>    each row is a score for the i'th individual.
+            3. comp_b:        <(I, L) ndarray>    each row is a score for the i'th individual.
+            3. pi:            <(2, ) or (2, I)>   mixing weights, global or for each user.
 
          OUTPUT:
         --------
-            1. logP:    <(N_te, ) ndarray>     logP of the test points
+            1. ranking:     <(2, ) tuple>   avg. per individual and avg. across all points
         """
-        return [obj_func['ind_logp'](multi, test), obj_func['p_logp'](multi, test)]
+        if pi is None:
+            scores = comp_a
+        elif len(pi.shape) == 1:
+            scores = pi[0] * comp_a + pi[1] * comp_b
+        else:
+            scores = col_vector(pi[:, 0]) * comp_a + col_vector(pi[:, 1]) * comp_b
+        return [obj_func['ind_logp'](scores, test), obj_func['p_logp'](scores, test)]
 
 
 
@@ -109,7 +119,7 @@ class _Evaluation(object):
 class _NonSmoothing(_Evaluation):
     
     def __init__(self):
-        log.info('Evaluating ranking on a train+val without smoothing')
+        log.info('Evaluating logp on a train+val without smoothing')
 
     def evaluate(self, train, val, test, dim, area):
         eval_train = train + val
@@ -119,16 +129,16 @@ class _NonSmoothing(_Evaluation):
         popularity_scores = self._train_mfs(['popularity'],eval_train,dim,area)[0]
 
         log.info('Evaluating popularity')
-        popularity_erank = self._compute_logp(test, popularity_scores)
+        popularity_logp = self._compute_logp(test, popularity_scores)
 
         log.info('Evaluating memory')
-        mem_erank = self._compute_logp(test, mem_scores)
+        mem_logp = self._compute_logp(test, mem_scores)
 
         log.info('Evaluating ground truth')
-        gt_erank = self._compute_logp(test, gt_scores)
+        gt_logp = self._compute_logp(test, gt_scores)
 
 
-        results = {'MEMORY': mem_erank, 'GROUNDTRUTH': gt_erank, 'POPULARITY': popularity_erank}
+        results = {'MEMORY': mem_logp, 'GROUNDTRUTH': gt_logp, 'POPULARITY': popularity_logp}
         self.pretty_print(results)
 
         return results           
@@ -136,13 +146,14 @@ class _NonSmoothing(_Evaluation):
 class _SmoothedMem(_Evaluation):
     
     def __init__(self):
-        log.info('Evaluating ranking on a train+val with smoothing')
+        log.info('Evaluating logp on a train+val with smoothing')
 
     def evaluate(self, train, val, test, dim, area):
         eval_train = train + val
 
         s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)[0]
         log.info('Evaluating smoothed memory')
+
         s_mem_erank = self._compute_logp(test, s_mem_scores)
 
         results = {'S_MEMORY': s_mem_erank}
@@ -153,7 +164,7 @@ class _SmoothedMem(_Evaluation):
 class _GridSearch(_Evaluation):
     
     def __init__(self):
-        log.info('Evaluating ranking with global gridsearched mixing weights')
+        log.info('Evaluating logp with global gridsearched mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
 
@@ -174,9 +185,9 @@ class _GridSearch(_Evaluation):
             erank_test = self._compute_logp(test, scores)
             results_val['%.2f' % alpha] = erank_val
             results_test['%.2f' % alpha] = erank_test
-        log.info('Erank on validation data')
+        log.info('Log likelihood on validation data')
         self.pretty_print(results_val)
-        log.info('Erank on test data')
+        log.info('Log likelihood on test data')
         self.pretty_print(results_test)
 
         eval_train = train + val
@@ -196,9 +207,9 @@ class _GridSearch(_Evaluation):
             erank_test = self._compute_logp(test, scores)
             results_val['%.2f' % alpha] = erank_val
             results_test['%.2f' % alpha] = erank_test
-        log.info('Erank on validation data')
+        log.info('Log likelihood on validation data')
         self.pretty_print(results_val)
-        log.info('Erank on test data')
+        log.info('Log likelihood on test data')
         self.pretty_print(results_test)
 
 
@@ -207,7 +218,7 @@ class _EmGlobal(_Evaluation):
     Mixing memory with either NMF or HB_NMF. The mixing weights are learned globally for all users.
     """
     def __init__(self):
-        log.info('Evaluating ranking with global learned mixing weights')
+        log.info('Evaluating logp with global learned mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
         mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
@@ -235,7 +246,7 @@ class _EmIndiv(_Evaluation):
     Mixing memory with either NMF or HB_NMF. The mixing weights are learned for each individual separately.
     """
     def __init__(self):
-        log.info('Evaluating ranking with individual learned mixing weights')
+        log.info('Evaluating logp with individual learned mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
         mem_scores = self._train_mfs(['memory'],train, dim, area)[0]

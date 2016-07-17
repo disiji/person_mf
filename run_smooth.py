@@ -13,8 +13,7 @@ import logging
 from utils import log_utils as log
 from utils import file_utils as fu
 
-from evaluation import method_factory as mf
-from smoothing import method_factory as mf_smoothing
+from smoothing_logp import method_factory as mf_smoothing
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -31,8 +30,6 @@ if __name__ == '__main__':
         log._ch.setLevel(logging.DEBUG)
 
     train, val, test = fu.load_data(args.area)
-    #eval_method = mf[args.m]()
 
-    #results = eval_method.evaluate(train, val, test, args.dim, args.area)
     smooth_method = mf_smoothing[args.m]()
     results = smooth_method.evaluate(train, val, test, args.dim, args.area)
