@@ -145,7 +145,8 @@ class _S_Memory(_MFS):
     """
     def get_factorized_mat(self, data, dim, area):
         temp = np.array(data.toarray())
-        alpha = 0.01 # alpha is smoothing parameter
+        alpha = 0.99 # alpha is smoothing parameter
+        print alpha
         temp = temp * (1-alpha) + np.mean(temp,axis = 0)*alpha       
         return temp
 
@@ -155,8 +156,11 @@ class _Popularity(_MFS):
     """
     def get_factorized_mat(self, data, dim, area):
         temp = np.array(data.toarray())
+        print np.mean(temp,axis = 0).shape
+        print len(np.mean(temp,axis = 0)[np.mean(temp,axis = 0)>0])
         P = np.zeros(data.shape)
         P += np.mean(temp,axis = 0)
+        print np.sum(P, axis = 1)
         return P
 
 """

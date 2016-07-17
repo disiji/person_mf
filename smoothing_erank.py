@@ -108,16 +108,6 @@ class _Evaluation(object):
         x = []
         col_names = ['avg. indiv', 'avg. points']
         row_names = []
-        for name, scores in results.items():
-            row_names.append(name)
-            x.append(scores)
-
-        x = np.array(x)
-        print(DataFrame(x, columns=col_names, index=row_names))
-
-        x = []
-        col_names = ['avg. indiv', 'avg. points']
-        row_names = []
         for name, scores in sorted(results.items()):
             row_names.append(name)
             x.append(scores)
@@ -151,6 +141,23 @@ class _NonSmoothing(_Evaluation):
         self.pretty_print(results)
 
         return results           
+
+class _SmoothedMem(_Evaluation):
+    
+    def __init__(self):
+        log.info('Evaluating ranking on a train+val with smoothing')
+
+    def evaluate(self, train, val, test, dim, area):
+        eval_train = train + val
+
+        s_mem_scores = self._train_mfs(['s_memory'],eval_train, dim, area)[0]
+        log.info('Evaluating smoothed memory')
+        s_mem_erank = self._compute_erank(test, s_mem_scores)
+
+        results = {'S_MEMORY': s_mem_erank}
+        self.pretty_print(results)
+
+        return results 
 
 class _GridSearch(_Evaluation):
     
@@ -216,7 +223,7 @@ class _EmGlobal(_Evaluation):
         popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
 
         mem_mult = normalize_mat_row(mem_scores)
-        popularity_mult = normalize_mat_row(popularity_scores)
+        popularity_mult = normalize_mat_row(popularity_scores+0.001)
 
         pi_mem_pop = learn_mix_mult_global(1.1, mem_mult, popularity_mult, val)
         log.info('Global mixing weight is %f and %f' % (pi_mem_pop[0],pi_mem_pop[1]))
@@ -244,7 +251,7 @@ class _EmIndiv(_Evaluation):
         popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
 
         mem_mult = normalize_mat_row(mem_scores)
-        popularity_mult = normalize_mat_row(popularity_scores)
+        popularity_mult = normalize_mat_row(popularity_scores+0.001)
 
         pi_mem_pop = learn_mix_mult_on_individual(1.1, mem_mult, popularity_mult, val)
 
@@ -263,4 +270,4 @@ class _EmIndiv(_Evaluation):
                                 METHOD FACTORY
 ******************************************************************************
 """
-method_factory = {'non_smoothing': _NonSmoothing, 'gridsearch': _GridSearch, 'mix_indiv': _EmIndiv, 'mix_global': _EmGlobal,}
+method_factory = {'s_mem': _SmoothedMem,'non_smoothing': _NonSmoothing, 'gridsearch': _GridSearch, 'mix_indiv': _EmIndiv, 'mix_global': _EmGlobal,}

@@ -152,6 +152,57 @@ def _individuals_erank(score_mat, test_data):
     log.info('Erank for individuals took %d seconds. %.2f secs on avg for indiv' % (total, total / I))
     return avg_erank / I
 
+
+def _points_logp(score_mat, test_data):
+    """
+    Computes the expected rank of the test data. The returned value is the average across all points' erank.
+
+     INPUT:
+    -------
+        1. score_mat:    <(I, L) csr_mat>  users scores. Doesn't have to be probabilities (for SVD)
+        2. test_data:    <(I, L) csr_mat>  users test observations.
+
+     OUTPUT:
+    --------
+        1. avg_erank:   <float>  avg. erank of all the test data.
+    """
+    score_mat /= np.sum(score_mat)
+    N = test_data.sum()
+    sum_logp = 0
+
+    for i,j,v in zip(test_data.row, test_data.col, test_data.data):
+        sum_logp += v * np.log(score_mat[i,j])
+
+    return sum_lop / N
+
+
+def _individuals_logp(score_mat, test_data):
+    """
+    Computes the expected rank of the test data. The returned value is the average across all individuals.
+    For each individual we average the rank first on hers test data.
+
+     INPUT:
+    -------
+        1. score_mat:    <(I, L) csr_mat>  users scores. Doesn't have to be probabilities (for SVD)
+        2. test_data:    <(I, L) csr_mat>  users test observations.
+
+     OUTPUT:
+    --------
+        1. avg_erank:   <float>  avg. erank of all the individual.
+    """
+    row_sums = score_mat.sum(axis=1)
+    score_mat = score_mat / row_sums[:, np.newaxis]
+    I = score_mat.shape[0]
+    sum_logp = 0
+
+    for i,j,v in zip(test_data.row, test_data.col, test_data.data):
+        sum_logp += v * np.log(score_mat[i,j])
+
+    return sum_lop / I
+
+
 # factory
 obj_func = {'ind_erank': _individuals_erank,
-            'p_erank': _points_erank}
+            'p_erank': _points_erank,
+            'ind_logp': _individuals_logp,
+            'p_logp':_points_erank}

@@ -17,7 +17,7 @@ from utils import log_utils as log
 from utils.helpers import normalize_mat_row, convert_sparse_to_coo, col_vector
 
 
-def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.001):
+def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.00001):
     """
     Learning the mixing weights for mixture of two multinomials. Each observation is considered as a data point
     and the mixing weights (\pi) are learned using all the points.
@@ -79,7 +79,8 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
             log_likelihood = np.mean(data_likelihood + prior_probability)
 
             if np.abs(log_likelihood - log_like_tracker[-1]) < tol:
-                log.debug('[iter %d] [Reached convergence.]' % em_iter)
+                log.info('[iter %d] [Reached convergence.]' % em_iter)
+                print "log_likelihood:", log_like_tracker
                 break
 
             log.debug('[iter %d] [Liklihood: [%.4f -> %.4f]]' % (em_iter, log_like_tracker[-1], log_likelihood))
@@ -97,9 +98,9 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
 
         # M-Step. Only on the \pi with Dirichlet prior alpha > 1
         pi = np.sum(resp * col_vector(val_data[:, 2]), axis=0)
+        print pi
         pi += alpha - 1
         pi /= np.sum(pi)
-        print pi
 
     total_time = time.time() - start
     log.debug('Finished EM. Total time = %d secs -- %.3f per iteration' % (total_time, total_time / em_iter))
@@ -107,7 +108,7 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
     return pi
 
 
-def learn_mix_mult_on_individual(alpha, mem_mult, mf_mult, val_mat, num_em_iter=100, tol=0.001):
+def learn_mix_mult_on_individual(alpha, mem_mult, mf_mult, val_mat, num_em_iter=10000, tol=0.00001):
     """
     Learning the mixing weights for mixture of two multinomials. Each individual learns mixing weights.
 
@@ -162,7 +163,7 @@ def learn_mix_mult_on_individual(alpha, mem_mult, mf_mult, val_mat, num_em_iter=
     return pis
 
 
-def learn_mix_mult_global(alpha, mem_mult, mf_mult, val_mat, num_em_iter=100, tol=0.001):
+def learn_mix_mult_global(alpha, mem_mult, mf_mult, val_mat, num_em_iter=100000, tol=0.0001):
     """
     Learning the mixing weights for mixture of two multinomials globally for all users. Each observation is a point in
     model.
