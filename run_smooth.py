@@ -13,7 +13,7 @@ import logging
 from utils import log_utils as log
 from utils import file_utils as fu
 
-from smoothing_logp import method_factory as mf_smoothing
+from smooth import method_factory as mf_smoothing
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -21,7 +21,7 @@ if __name__ == '__main__':
                         default='tw_oc', choices=fu.valid_areas())
     parser.add_argument('-dim', type=int, help='Number of dimensions for MFs', default=30)
     parser.add_argument('-m', type=str, help='Smoothing method',
-                        default='non_smoothing', choices=list(mf_smoothing.keys()))
+                        default='smoothing', choices=list(mf_smoothing.keys()))
     parser.add_argument('-v', type=bool, help='Debug logging level', default=False)
 
     args = parser.parse_args()

@@ -265,6 +265,7 @@ class _EmIndiv(_Evaluation):
         return results
 
 
+
 """
 ******************************************************************************
                                 METHOD FACTORY

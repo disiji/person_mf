@@ -66,10 +66,10 @@ class _HBNMF(_MFS):
 
         root_dir = '/extra/disij0/data/person_mf/%s/hier_nmf' % area
 
-        htheta = fu.load_np_txt(join(root_dir, 'htheta.tsv'), delimiter='\t')
+        htheta = fu.load_np_txt(join(root_dir, 'htheta.tsv'), delimiter='\s\s\s\s')
         htheta = self._fix_projection(htheta, I, dim)
 
-        hbeta = fu.load_np_txt(join(root_dir, 'hbeta.tsv'), delimiter='\t')
+        hbeta = fu.load_np_txt(join(root_dir, 'hbeta.tsv'), delimiter='\s\s\s\s')
         hbeta = self._fix_projection(hbeta, L, dim)
 
         mf = htheta.dot(hbeta.T)
@@ -97,8 +97,8 @@ class _HBNMF(_MFS):
             1. fixed:   <(items, dim) ndarray>           fixed projection matrix
         """
         fixed = np.zeros([items, dim])
-        my_ids = mat[:, 1] - 1          # Because Disi added 1 to my 0'based projection
-    	values = mat[:, 2:]
+        my_ids = mat[:,1] - 1          # Because Disi added 1 to my 0'based projection
+        values = mat[:,2]
 
         for i in range(mat.shape[0]):
             fixed[my_ids[i]] = values[i]
@@ -146,7 +146,6 @@ class _S_Memory(_MFS):
     def get_factorized_mat(self, data, dim, area):
         temp = np.array(data.toarray())
         alpha = 0.01 # alpha is smoothing parameter
-        print alpha
         temp = temp * alpha + np.mean(temp,axis = 0)*(1-alpha)       
         return temp
 
@@ -159,6 +158,8 @@ class _Popularity(_MFS):
         P = np.zeros(data.shape)
         P += np.mean(temp,axis = 0)
         return P
+
+
 
 """
 *******************************************************************************************

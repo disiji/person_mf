@@ -221,11 +221,12 @@ class _EmGlobal(_Evaluation):
         log.info('Evaluating logp with global learned mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
-        mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
-        popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
+        eval_train = train + val
+        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)[0]
+        popularity_scores = self._train_mfs(['popularity'],eval_train,dim,area)[0]
 
         mem_mult = normalize_mat_row(mem_scores)
-        popularity_mult = normalize_mat_row(popularity_scores+0.001)
+        popularity_mult = normalize_mat_row(popularity_scores+0.00001)
 
         pi_mem_pop = learn_mix_mult_global(1.1, mem_mult, popularity_mult, val)
         log.info('Global mixing weight is %f and %f' % (pi_mem_pop[0],pi_mem_pop[1]))
@@ -249,11 +250,12 @@ class _EmIndiv(_Evaluation):
         log.info('Evaluating logp with individual learned mixing weights')
 
     def evaluate(self, train, val, test, dim, area):
-        mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
-        popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]
+        eval_train = train + val
+        mem_scores = self._train_mfs(['memory'],eval_train, dim, area)[0]
+        popularity_scores = self._train_mfs(['popularity'],eval_train,dim,area)[0]
 
         mem_mult = normalize_mat_row(mem_scores)
-        popularity_mult = normalize_mat_row(popularity_scores+0.001)
+        popularity_mult = normalize_mat_row(popularity_scores+0.00001)
 
         pi_mem_pop = learn_mix_mult_on_individual(1.1, mem_mult, popularity_mult, val)
 

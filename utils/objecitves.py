@@ -6,7 +6,7 @@ from __future__ import division
 import numpy as np
 import time
 
-import log_utils as log
+from . import log_utils as log
 
 from scipy.sparse import find
 from scipy.sparse import coo_matrix

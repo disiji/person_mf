@@ -65,7 +65,7 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
     log_like_tracker = [-np.inf]
     pi = np.array([0.5, 0.5])
     start = time.time()
-    for em_iter in xrange(1, num_em_iter + 1):
+    for em_iter in range(1, num_em_iter + 1):
         # Evey 5 iteration we will compute the posterior log probability to see if we converged.
         if em_iter % 5 == 0:
             data_log_like = pi[0] * mem_mult[val_data[:, 0].astype(int), val_data[:, 1].astype(int)] + \
@@ -79,11 +79,9 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
             log_likelihood = np.mean(data_likelihood + prior_probability)
 
             if np.abs(log_likelihood - log_like_tracker[-1]) < tol:
-                log.info('[iter %d] [Reached convergence.]' % em_iter)
-                print "log_likelihood:", log_like_tracker
                 break
 
-            log.debug('[iter %d] [Liklihood: [%.4f -> %.4f]]' % (em_iter, log_like_tracker[-1], log_likelihood))
+
             log_like_tracker.append(log_likelihood)
 
         # E-Step
@@ -98,7 +96,6 @@ def _learn_mix_mult(alpha, mem_mult, mf_mult, val_data, num_em_iter=100, tol=0.0
 
         # M-Step. Only on the \pi with Dirichlet prior alpha > 1
         pi = np.sum(resp * col_vector(val_data[:, 2]), axis=0)
-        print pi
         pi += alpha - 1
         pi /= np.sum(pi)
 
@@ -142,8 +139,8 @@ def learn_mix_mult_on_individual(alpha, mem_mult, mf_mult, val_mat, num_em_iter=
 
     start = time.time()
     for i in range(I):
-        if i % 200 == 0:
-            log.info('Em for individual %d out of %d' % (i + 1, I))
+        # if i % 200 == 0:
+        #     log.info('Em for individual %d out of %d' % (i + 1, I))
 
         # The way the global em is implemented, allows me to simply call it with the i_val_data and it will only
         # compute the \pi as a function of that user.
