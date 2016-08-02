@@ -170,7 +170,7 @@ class _Smoothing(_Evaluation):
 
             return logp_p,logp_indiv
 
-        ALPHA =  np.arange(0,1,0.1)
+        ALPHA =  np.arange(0.5,1.05,0.1)
 
         mem_scores = self._train_mfs(['memory'],train, dim, area)[0]
         popularity_scores = self._train_mfs(['popularity'],train,dim,area)[0]+0.0001
@@ -189,7 +189,7 @@ class _Smoothing(_Evaluation):
 
 
         log.info('#####learning statistical translation model#######')
-        log.info('computing sparsed mutual information')
+        log.info('computing sparse mutual information')
         # # binary = (mem_scores>0)*1#I*L
         # # count_1d = np.sum(binary,axis = 0)#1*L
         # # count_2d = np.dot(binary.T,binary)#L*L
@@ -218,14 +218,6 @@ class _Smoothing(_Evaluation):
         # #     + (0 if P_2d_0_1[u,w]==0 else P_2d_0_1[u,w]*np.log(P_2d_0_1[u,w]/P_1d_0[u]/P_1d_1[w]))
         # #     + (0 if P_2d_0_0[u,w]==0 else P_2d_0_0[u,w]*np.log(P_2d_0_0[u,w]/P_1d_0[u]/P_1d_0[w]))
         # #     for w in range(L)] for u in range(L)])
-        # # MI = np.zeros((L,L))
-        # # for u in range(L):
-        # #     if u%200 == 0:
-        # #         log.info('computing mutual info pairs of %d of %d' % (u,L))
-        # #     for w in range(u+1):
-        # #         MI[u,w] = metrics.mutual_info_score(None, None, contingency=np.histogram2d(binary[:,u], binary[:,w],bins = 2)[0])
-        # #         MI[w,u] = MI[u,w]
-        # MI = np.identity(L)
         
         binary = (train>0)*1#I*L
         count_1d = binary.sum(axis = 0)#1*L
@@ -238,8 +230,13 @@ class _Smoothing(_Evaluation):
         PPMI = np.log2(temp)
         PPMI[PPMI<0] = 0
 
-        k = 20
-        idx = np.array([np.asarray(PPMI[i].argsort().T).reshape(-1)[-k:][::-1] for i in range(L)])
+ 
+        k = 50
+        idx = np.array([[j for j in np.asarray(PPMI[i].argsort().T).reshape(-1)[-k:][::-1] 
+                         if PPMI[i,j]>0] for i in range(L)])
+        for u in range(L):
+            if u not in idx[u]:
+                idx[u].append(u)
 
         binary = (np.array(train.toarray())>0)*1#I*L
         MI = np.zeros((L,L))
@@ -250,8 +247,9 @@ class _Smoothing(_Evaluation):
                         contingency=np.histogram2d(binary[:,u], binary[:,w])[0])
 
         MI = normalize_mat_row(MI)
+        MI[ ~ np.isfinite( MI )]= 0
         ##########and self transition probability########
-        log.info('gridsearching on validation set')
+        log.info('gridsearching on validation set (can be optimized)')
         val_result = dict()
         for alpha in ALPHA:
             for mu in ALPHA:
@@ -260,13 +258,15 @@ class _Smoothing(_Evaluation):
                 val_result[(alpha,mu)] =  self._compute_logp_point(val, temp)
         #####choose alpha and mu that achieves best avg. point logP 
         alpha,mu = max(val_result, key=val_result.get)
-        stm_scores = np.dot(mem_mult , MI*(1-alpha)+np.identity(L)*alpha) * mu + popularity_mult*(1-mu)
-        log.info('Evaluating smoothed memory')
+        temp = MI*(1-alpha)+np.identity(L)*alpha
+        stm_scores = np.dot(mem_mult , temp) * mu + popularity_mult*(1-mu)
+        log.info('Evaluating MI based translation model')
         stm_result = self._compute_erank_logp(test, stm_scores)
         results['Translation'] = stm_result
+        print("alpha and mu:",alpha, mu)
         #####record results and mixture parameters########
         logP_p['Translation'],logP_indiv['Translation'] = logP(stm_scores,test)
-        mix_alpha['Translation'] = np.zeros(I)+mu       
+        mix_alpha['Translation'] = np.zeros(I)+mu*alpha      
 
 
         log.info('#############learning EM global#################')
@@ -303,6 +303,7 @@ class _Smoothing(_Evaluation):
             val_result[alpha] =  self._compute_logp_point(val, temp)
         #####choose alpha that achieves best avg. point logP 
         alpha = max(val_result, key=val_result.get)
+        print('alpha:',alpha)
         s_mem_scores = mem_scores * alpha + popularity_scores*(1-alpha)
         log.info('Evaluating smoothed memory')
         s_mem_result = self._compute_erank_logp(test, s_mem_scores)
@@ -323,6 +324,7 @@ class _Smoothing(_Evaluation):
             val_result[alpha] =  self._compute_logp_point(val, temp)
         #####choose alpha that achieves best avg. point logP 
         alpha = max(val_result, key=val_result.get)
+        print('alpha:',alpha)
         dirichlet_scores = mem_scores + popularity_mult*alpha*N/I
         log.info('Evaluating with Dirichlet prior')
         dirichlet_result = self._compute_erank_logp(test, dirichlet_scores)

@@ -23,7 +23,6 @@ def normalize_mat_row(mat, norm=1):
     """
     n, d = mat.shape
     tmp = mat / col_vector(np.sum(mat, axis=1))
-
     return tmp * norm
 
 
