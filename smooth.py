@@ -259,10 +259,14 @@ class _Smoothing(_Evaluation):
                     pref[i] = np.sum(trans * mem_mult[i][:, np.newaxis], axis=0)
                 temp = pref * mu + popularity_mult*(1-mu)
                 val_result[(alpha,mu)] =  self._compute_logp_point(val, temp)
+            print(alpha,mu,val_result[(alpha,mu)])
         #####choose alpha and mu that achieves best avg. point logP 
         alpha,mu = max(val_result, key=val_result.get)
-        temp = MI*(1-alpha)+np.identity(L)*alpha
-        stm_scores = np.dot(mem_mult , temp.T) * mu + popularity_mult*(1-mu)
+        pref = np.zeros((I,L))
+        trans = MI*(1-alpha)+np.identity(L)*alpha
+        for i in range(I):
+            pref[i] = np.sum(trans * mem_mult[i][:, np.newaxis], axis=0)
+        stm_scores = pref * mu + popularity_mult*(1-mu)
         log.info('Evaluating MI based translation model')
         stm_result = self._compute_erank_logp(test, stm_scores)
         results['Translation'] = stm_result
